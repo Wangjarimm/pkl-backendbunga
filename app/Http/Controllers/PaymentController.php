@@ -19,20 +19,23 @@ class PaymentController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'nis' => 'required|exists:siswas,nis', // Validasi berdasarkan NIS
-            'nama' => 'required|string|max:255',   // Validasi nama
-            'kelas' => 'required|string|max:255',  // Validasi kelas
-            'jurusan' => 'required|string|max:255', // Validasi jurusan
-            'va_number' => 'required',             // Validasi nomor VA
-            'note' => 'nullable|string',           // Validasi catatan (opsional)
-            'amount' => 'required|integer',        // Validasi jumlah pembayaran
-            'tanggal_setor' => 'required|date',    // Validasi tanggal setor
+            'nis' => 'required|exists:siswas,nis',
+            'nama' => 'required|string|max:255',
+            'kelas' => 'required|string|max:255',
+            'jurusan' => 'required|string|max:255',
+            'va_number' => 'required',
+            'note' => 'nullable|string',
+            'tanggal_setor' => 'required|date',
+            'amount' => 'required|integer',
+            'details' => 'required|array|min:1',
+            'details.*.tagihan_siswa_id' => 'required|exists:tagihan_siswas,id',
+            'details.*.jumlah_bayar' => 'required|numeric|min:0',
         ]);
 
         // Cari siswa berdasarkan NIS
         $siswa = Siswa::where('nis', $request->nis)->firstOrFail();
 
-        // Simpan pembayaran dengan siswa_id
+        // Buat data payment utama
         $payment = Payment::create([
             'siswa_id' => $siswa->id,
             'nama' => $request->nama,
@@ -40,15 +43,28 @@ class PaymentController extends Controller
             'jurusan' => $request->jurusan,
             'va_number' => $request->va_number,
             'note' => $request->note,
-            'amount' => $request->amount,
             'tanggal_setor' => $request->tanggal_setor,
+            'amount' => $request->amount,
+            'status' => 'pending',
         ]);
 
+        // Simpan detail pembayaran per tagihan
+        foreach ($request->details as $detail) {
+            \App\Models\PaymentDetail::create([
+                'payment_id' => $payment->id,
+                'tagihan_siswa_id' => $detail['tagihan_siswa_id'],
+                'jumlah_bayar' => $detail['jumlah_bayar'],
+            ]);
+        }
+
+        // Return response dengan id di root dan data lengkap
         return response()->json([
-            'message' => 'Payment berhasil dibuat',
-            'data' => $payment->load('siswa')
+            'message' => 'Payment dan details berhasil dibuat',
+            'id' => $payment->id,
+            'data' => $payment->load('paymentDetails', 'siswa')
         ], 201);
     }
+
 
     // Method untuk melakukan pembayaran berdasarkan data yang dikirimkan
     public function pay(Request $request)
@@ -124,6 +140,5 @@ class PaymentController extends Controller
         return response()->json(['message' => 'Payment berhasil dihapus']);
     }
 
-
-
+    
 }

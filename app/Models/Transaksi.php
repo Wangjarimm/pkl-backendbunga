@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class Transaksi extends Model
 {
     protected $fillable = [
+        "payment_id",
         'siswa_id',
         'nama',
         'kelas',
@@ -24,5 +25,10 @@ class Transaksi extends Model
     public function siswa()
     {
         return $this->belongsTo(Siswa::class);
+    }
+
+    public function payment()
+    {
+        return $this->belongsTo(Payment::class);
     }
 }

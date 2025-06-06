@@ -16,9 +16,10 @@ class AuthController extends Controller
     {
         try {
             $request->validate([
-                'va' => 'nullable|unique:users,va',
+                'va' => 'nullable|unique:users,va|exists:siswas,va',
                 'username' => 'nullable|unique:users,username',
-                'password' => 'required|min:6'
+                'password' => 'required|min:6',
+                'nis' => 'nullable|unique:users,nis|exists:siswas,nis' // Validasi NIS jika diisi
             ]);
     
             if (!$request->va && !$request->username) {
@@ -30,7 +31,8 @@ class AuthController extends Controller
             $user = User::create([
                 'va' => $request->va,
                 'username' => $request->username,
-                'password' => Hash::make($request->password)
+                'password' => Hash::make($request->password),
+                'nis' => $request->nis
             ]);
     
             return response()->json(['message' => 'Registrasi berhasil', 'user' => $user], 201);

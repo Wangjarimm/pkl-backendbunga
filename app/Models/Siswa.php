@@ -8,10 +8,15 @@ use Illuminate\Database\Eloquent\Model;
 class Siswa extends Model
 {
     use HasFactory;
-    protected $fillable = ['nis', 'nama', 'kelas', 'status_pembayaran'];
+    protected $fillable = ['nis', 'nama', 'va', 'kelas', 'jurusan', 'status_pembayaran'];
 
     public function payments()
     {
         return $this->hasMany(Payment::class);
+    }
+
+    public function tagihanSiswa()
+    {
+        return $this->hasMany(TagihanSiswa::class);
     }
 }
